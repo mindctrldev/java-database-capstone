@@ -1,10 +1,10 @@
 import { updateAppointment } from "../js/services/appointmentRecordService.js";
 import { getDoctors } from "../js/services/doctorServices.js";
+
 document.addEventListener("DOMContentLoaded", initializePage);
 
 async function initializePage() {
-  const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
-  // Get appointmentId and patientId from the URL query parameters
+  const token = localStorage.getItem("token");
   const urlParams = new URLSearchParams(window.location.search);
   const appointmentId = urlParams.get("appointmentId");
   const patientId = urlParams.get("patientId");
@@ -14,73 +14,81 @@ async function initializePage() {
   const appointmentDate = urlParams.get("appointmentDate");
   const appointmentTime = urlParams.get("appointmentTime");
 
-  console.log(doctorId)
+  console.log(doctorId);
+
   if (!token || !patientId) {
     alert("Missing session data, redirecting to appointments page.");
     window.location.href = "/pages/patientAppointments.html";
     return;
   }
 
-  // get doctor to displat only the available time of doctor
   getDoctors()
-  .then(doctors => {
-    console.log("Fetched doctors:", doctors);  // Log the array of doctors
-
-    // Find the doctor by the ID from the URL
-    const doctor = doctors.find(d => d.id == doctorId);
-    console.log("Selected doctor:", doctor);  // Log the selected doctor
-
-    if (!doctor) {
-      alert("Doctor not found.");
-      return;
-    }
-
-    // Fill the form with the appointment data passed in the URL
-    document.getElementById("patientName").value = patientName || "You";
-    document.getElementById("doctorName").value = doctorName;
-    document.getElementById("appointmentDate").value = appointmentDate;
-    document.getElementById("appointmentTime").value = appointmentTime;
-
-    const timeSelect = document.getElementById("appointmentTime");
-    doctor.availableTimes.forEach(time => {
-      const option = document.createElement("option");
-      option.value = time;
-      option.textContent = time;
-      timeSelect.appendChild(option);
-    });
-
-    // Handle form submission for updating the appointment
-    document.getElementById("updateAppointmentForm").addEventListener("submit", async (e) => {
-      e.preventDefault(); // Prevent default form submission
-
-      const date = document.getElementById("appointmentDate").value;
-      const time = document.getElementById("appointmentTime").value;
-      const startTime = time.split('-')[0];
-      if (!date || !time) {
-        alert("Please select both date and time.");
+    .then(doctors => {
+      const doctor = doctors.find(d => d.id == doctorId);
+      if (!doctor) {
+        alert("Doctor not found.");
         return;
       }
 
-      const updatedAppointment = {
-      id: appointmentId,
-      doctor: { id: doctor.id },
-      patient: { id: patientId },
-      appointmentTime: `${date}T${startTime}:00`,
-      status: 0
-    };
+      document.getElementById("patientName").value = patientName || "You";
+      document.getElementById("doctorName").value = doctorName;
+      document.getElementById("appointmentDate").value = appointmentDate;
+      document.getElementById("appointmentTime").value = appointmentTime;
 
-      const updateResponse = await updateAppointment(updatedAppointment, token);
+      const timeSelect = document.getElementById("appointmentTime");
 
-      if (updateResponse.success) {
-        alert("Appointment updated successfully!");
-        window.location.href = "/pages/patientAppointments.html"; // Redirect back to the appointments page
-      } else {
-        alert("❌ Failed to update appointment: " + updateResponse.message);
+      if (appointmentTime && !doctor.availableTimes.includes(appointmentTime)) {
+        const option = document.createElement("option");
+        option.value = appointmentTime;
+        option.textContent = appointmentTime;
+        timeSelect.appendChild(option);
       }
+      doctor.availableTimes.forEach(time => {
+        const option = document.createElement("option");
+        option.value = time;
+        option.textContent = time;
+        timeSelect.appendChild(option);
+      });
+
+      if (appointmentTime) {
+        timeSelect.value = appointmentTime;
+      }
+
+      document.getElementById("updateAppointmentForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const date = document.getElementById("appointmentDate").value;
+        const time = document.getElementById("appointmentTime").value;
+        const startTime = time.split('-')[0];
+
+        console.log(date);
+        console.log(startTime);
+
+        if (!date || !time) {
+          alert("Please select both date and time.");
+          return;
+        }
+
+        const updatedAppointment = {
+          id: parseInt(appointmentId),
+          doctor: { id: parseInt(doctor.id) },
+          patient: { id: parseInt(patientId) },
+          appointmentTime: `${date}T${startTime}:00`,
+          status: 0
+        };
+
+        const updateResponse = await updateAppointment(updatedAppointment, token);
+
+        if (updateResponse.success) {
+          alert("Appointment updated successfully!");
+          window.location.href = "/pages/patientAppointments.html";
+        } else {
+          alert("Failed to update appointment: " + updateResponse.message);
+        }
+      });
+    })
+    .catch(error => {
+      console.error("Error fetching doctors:", error);
+      alert("Failed to load doctor data.");
     });
-  })
-  .catch(error => {
-    console.error("Error fetching doctors:", error);
-    alert("❌ Failed to load doctor data.");
-  });
 }

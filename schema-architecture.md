@@ -1,12 +1,9 @@
-Section 1: Architecture summary
+This Spring Boot application uses both MVC and REST controllers. Thymeleaf templates are used for the Admin and Doctor dashboards, while REST APIs serve all other modules. The application interacts with two databases--MySQL (for patient, doctor, appointment, and admin data) and MongoDB (for prescriptions). All controllers route requests through a common service layer, which in turn delegates to the appropriate repositories. MySQL uses JPA entities while MongoDB uses document models.
 
-This Spring Boot application uses both MVC and REST controllers. Thymeleaf templates are used for the Admin and Doctor dashboards, while REST APIs serve all other modules. The application interacts with two databases—MySQL (for patient, doctor, appointment, and admin data) and MongoDB (for prescriptions). All controllers route requests through a common service layer, which in turn delegates to the appropriate repositories. MySQL uses JPA entities while MongoDB uses document models.
-
-Section 2: Numbered flow of data and control
-
-1. User accesses AdminDashboard or Appointment pages.
-2. The action is routed to the appropriate Thymeleaf or REST controller.
-3. The controller calls the service layer.
-4. The service layer uses the MySQL repositories or MongoDB repository.
-5. The MySQL repositories accesses the MySQL database.
-6. The MongoDB repository accesses the MongoDB database.
+1. **User Interface Layer**: Users access the application through Thymeleaf-based web dashboards (AdminDashboard, DoctorDashboard) for server-rendered HTML pages, or via REST API clients (Appointments, PatientDashboard, PatientRecord) for JSON responses, allowing both traditional and scalable API-based interactions.
+2. **Controller Layer**: User requests are routed to either Thymeleaf Controllers (for server-rendered views, returning HTML templates) or REST Controllers (for API consumers, returning JSON). These controllers act as entry points, handling request validation and coordinating the flow.
+3. **Service Layer**: All controllers delegate their logic to this layer, which is the core of the backend system. It applies business rules, coordinates workflows, and ensures a clean separation between controller logic and data access, making the application maintainable and scalable.
+4. **Repository Layer**: The Service Layer communicates with this layer to perform data access operations. It includes MySQL Repositories (using Spring Data JPA for structured data like patients, doctors, appointments, admin) and MongoDB Repository (using Spring Data MongoDB for document-based data like prescriptions), abstracting database access logic.
+5. **Database Access**: Each repository directly interfaces with its respective database engine. MySQL stores core entities benefiting from relational schemas, while MongoDB stores flexible, nested data structures like prescriptions, leveraging the strengths of both structured and unstructured storage.
+6. **Model Binding**: Data retrieved from the databases is mapped into Java model classes. For MySQL, data is converted into JPA entities annotated with @Entity, representing rows in relational tables. For MongoDB, data is loaded into document objects annotated with @Document, mapping to BSON/JSON structures.
+7. **Application Models in Use**: The bound models are used in the response layer. In MVC flows, models are passed to Thymeleaf templates for rendering dynamic HTML. In REST flows, these models (or DTOs) are serialized into JSON and sent back to the client, completing the request-response cycle.

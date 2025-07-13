@@ -2,6 +2,7 @@ package com.project.back_end.controllers;
 
 import java.util.Map;
 
+import com.project.back_end.services.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,16 +13,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.back_end.models.Admin;
-import com.project.back_end.services.Service;
 
 @RestController
 @RequestMapping("${api.path}" + "admin")
 public class AdminController {
 
-    private final Service service;
+    private final AppService service;
 
     @Autowired
-    public AdminController(Service service) {
+    public AdminController(AppService service) {
         this.service = service;
     }
 
@@ -40,7 +40,7 @@ public class AdminController {
         {
             return "admin/adminDashboard";
         }
-        return "redirect:http://localhost:8080/"; 
-        
+        return "redirect:http://localhost:8080/";
+
     }
 }

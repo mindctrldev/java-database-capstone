@@ -1,4 +1,3 @@
-/* defineRole CSS */
 * {
   margin: 0;
   padding: 0;
@@ -8,39 +7,40 @@
 html, body {
   height: 100%;
   font-family: 'Roboto', sans-serif;
-  
-
 }
 
 .wrapper {
   display: flex;
-  flex-direction: column;
+  flex-direction:column ;
   min-height: 100vh;
 }
 
 h2 {
   font-size: 48px;
   margin-bottom: 50px;
-  color : #003e3e;
-  font-weight : bolder;
-  font-family: 'Alegreya','Roboto', sans-serif;
+  color: #003e3e;
+  font-weight: bold;
+  font-family: 'Alegreya', 'Roboto', sans-serif;
 }
 
-
 .main-content {
-  flex-grow: 1; 
+  flex-grow: 1;
   padding: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   text-align: center;
-  background-image: url("../images/defineRole/defineRole.png");
-  background-size: cover;       
-  background-position: center;  
-  background-repeat: no-repeat; 
+  background-image: url('../images/defineRole/defineRole.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
-  
+}
+.button-group {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
 }
 
 button {
@@ -50,19 +50,19 @@ button {
   border-radius: 12px;
   padding: 10px 20px;
   margin-top: 10px;
+  width: 200px;
   cursor: pointer;
   font-size: 16px;
-  width: 200px;
 }
 
 button:hover {
-  background-color: #A62B1F; 
+  background-color: #A62B1F;
 }
 
-.dashboard-btn{
-  background-color:#015c5d;
+.dashboard-btn {
+  background-color: #015c5d;
 }
 
-.dashboard-btn:hover{
-  background-color:#003e3e;
+.dashboard-btn:hover {
+  background-color: #003e3e;
 }

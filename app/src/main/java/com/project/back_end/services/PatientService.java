@@ -14,7 +14,6 @@ import com.project.back_end.models.Appointment;
 import com.project.back_end.models.Patient;
 import com.project.back_end.repo.AppointmentRepository;
 import com.project.back_end.repo.PatientRepository;
-
 import jakarta.transaction.Transactional;
 
 @Service
@@ -25,12 +24,11 @@ public class PatientService {
     private final TokenService tokenService;
 
     public PatientService(PatientRepository patientRepository, AppointmentRepository appointmentRepository,
-            TokenService tokenService) {
+                          TokenService tokenService) {
         this.patientRepository = patientRepository;
         this.appointmentRepository = appointmentRepository;
         this.tokenService = tokenService;
     }
-
     public int createPatient(Patient patient) {
         try {
             patientRepository.save(patient);
@@ -39,17 +37,13 @@ public class PatientService {
             System.out.println("Error: " + e);
             return 0;
         }
-
     }
 
     @Transactional
     public ResponseEntity<Map<String, Object>> getPatientAppointment(Long id, String token) {
         Map<String, Object> map = new HashMap<>();
-
         try {
             List<Appointment> appointments = appointmentRepository.findByPatientId(id);
-
-            // Convert appointments to DTOs
             List<AppointmentDTO> appointmentDTOs = appointments.stream()
                     .map(app -> new AppointmentDTO(
                             app.getId(),
@@ -90,7 +84,7 @@ public class PatientService {
         List<AppointmentDTO> appointmentDTOs = appointments.stream()
                 .map(app -> new AppointmentDTO(
                         app.getId(),
-                        app.getDoctor().getId(), // Only doctor ID
+                        app.getDoctor().getId(),
                         app.getDoctor().getName(),
                         app.getPatient().getId(),
                         app.getPatient().getName(),
@@ -100,7 +94,6 @@ public class PatientService {
                         app.getAppointmentTime(),
                         app.getStatus()))
                 .collect(Collectors.toList());
-
         map.put("appointments", appointmentDTOs);
         return ResponseEntity.status(HttpStatus.OK).body(map);
     }
@@ -111,7 +104,6 @@ public class PatientService {
         System.out.println("Startingur query");
         List<Appointment> appointments = appointmentRepository.filterByDoctorNameAndPatientId(name,
                 patientId);
-
         System.out.println(name);
         System.out.println(patientId);
         System.out.println("HI");
@@ -139,8 +131,7 @@ public class PatientService {
     }
 
     public ResponseEntity<Map<String, Object>> filterByDoctorAndCondition(String condition, String name,
-            long patientId) {
-
+                                                                          long patientId) {
         Map<String, Object> map = new HashMap<>();
         List<Appointment> appointments;
         if (condition.equals("past")) {
@@ -157,7 +148,7 @@ public class PatientService {
         List<AppointmentDTO> appointmentDTOs = appointments.stream()
                 .map(app -> new AppointmentDTO(
                         app.getId(),
-                        app.getDoctor().getId(), // Only doctor ID
+                        app.getDoctor().getId(),
                         app.getDoctor().getName(),
                         app.getPatient().getId(),
                         app.getPatient().getName(),

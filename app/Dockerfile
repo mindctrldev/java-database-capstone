@@ -1,4 +1,4 @@
-# Step 1: Use Maven with Temurin JDK 21 for building the app
+# Step 1: Use Maven with JDK 17 to build the app
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
@@ -6,10 +6,9 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-# Maven is pre-installed; no need to apt-get anything
 RUN mvn clean package -DskipTests
 
-# Step 2: Use Temurin JRE 17 for runtime
+# Step 2: Use lightweight JRE 17 for running the app
 FROM eclipse-temurin:17.0.15_6-jre
 
 WORKDIR /app

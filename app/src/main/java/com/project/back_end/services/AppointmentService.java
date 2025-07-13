@@ -1,5 +1,12 @@
 package com.project.back_end.services;
 
+import com.project.back_end.DTO.AppointmentDTO;
+import com.project.back_end.models.Appointment;
+import com.project.back_end.models.Patient;
+import com.project.back_end.repo.AppointmentRepository;
+import com.project.back_end.repo.DoctorRepository;
+import com.project.back_end.repo.PatientRepository;
+import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -8,32 +15,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import com.project.back_end.DTO.AppointmentDTO;
-import com.project.back_end.models.Appointment;
-import com.project.back_end.models.Patient;
-import com.project.back_end.repo.AppointmentRepository;
-import com.project.back_end.repo.DoctorRepository;
-import com.project.back_end.repo.PatientRepository;
-
-import jakarta.transaction.Transactional;
 
 @Service
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
-    private final com.project.back_end.services.Service service;
+    private final AppService service;
     private final TokenService tokenService;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
 
-    public AppointmentService(AppointmentRepository appointmentRepository,
-            com.project.back_end.services.Service service, TokenService tokenService,
-            PatientRepository patientRepository, DoctorRepository doctorRepository) {
+    public AppointmentService(
+            AppointmentRepository appointmentRepository,
+            AppService service,
+            TokenService tokenService,
+            PatientRepository patientRepository,
+            DoctorRepository doctorRepository
+    ) {
         this.appointmentRepository = appointmentRepository;
         this.service = service;
         this.tokenService = tokenService;
@@ -46,74 +47,100 @@ public class AppointmentService {
             appointmentRepository.save(appointment);
             return 1;
         } catch (Exception e) {
-            System.out.println("Error: " + e);
+            System.err.println("Error booking appointment: " + e.getMessage());
             return 0;
         }
     }
 
-    public ResponseEntity<Map<String, String>> updateAppointment(Appointment appointment) {
+    public ResponseEntity<Map<String, String>> updateAppointment(
+            Appointment appointment
+    ) {
         Map<String, String> response = new HashMap<>();
 
-        Optional<Appointment> result = appointmentRepository.findById(appointment.getId());
-        if (!result.isPresent()) {
-            response.put("message", "No appointment available with id: " + appointment.getId());
+        Optional<Appointment> existingAppointment = appointmentRepository.findById(
+                appointment.getId()
+        );
+        if (existingAppointment.isEmpty()) {
+            response.put(
+                    "message",
+                    "Appointment not found with ID: " + appointment.getId()
+            );
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        if (result.get().getPatient().getId() != appointment.getPatient().getId()) {
-            response.put("message", "Patient Id mismatch");
+        if (
+                !existingAppointment
+                        .get()
+                        .getPatient()
+                        .getId()
+                        .equals(appointment.getPatient().getId())
+        ) {
+            response.put("message", "Patient ID mismatch.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        int out = service.validateAppointment(appointment);
-        if (out == 1) {
+
+        int validationResult = service.validateAppointment(appointment);
+        if (validationResult == 1) {
             try {
                 appointmentRepository.save(appointment);
-                response.put("message", "Appointment Updated Successfully");
+                response.put("message", "Appointment updated successfully.");
                 return ResponseEntity.status(HttpStatus.OK).body(response);
-
             } catch (Exception e) {
-                System.out.println("Error: " + e);
-                response.put("message", "Internal Server Error");
+                System.err.println("Error updating appointment: " + e.getMessage());
+                response.put("message", "Internal server error during update.");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
-        } else if (out == -1) {
-            response.put("message", "Invalid doctor id");
+        } else if (validationResult == -1) {
+            response.put("message", "Invalid doctor ID.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        response.put("message", "Appointment already booked for given time or Doctor not available");
+        response.put(
+                "message",
+                "Appointment slot unavailable or doctor not available."
+        );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-
     }
 
-    public ResponseEntity<Map<String, String>> cancelAppointment(long id, String token) {
+    public ResponseEntity<Map<String, String>> cancelAppointment(
+            long id,
+            String token
+    ) {
         Map<String, String> response = new HashMap<>();
-        Optional<Appointment> appointment = appointmentRepository.findById(id);
-        String extractedToken = tokenService.extractEmail(token);
-        Patient patient = patientRepository.findByEmail(extractedToken);
-        if (patient.getId() != appointment.get().getPatient().getId()) {
-            response.put("message", "Patient Id mismatch");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        Optional<Appointment> appointmentOptional = appointmentRepository.findById(
+                id
+        );
+
+        if (appointmentOptional.isEmpty()) {
+            response.put("message", "Appointment not found with ID: " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        if (appointment.isPresent()) {
-            try {
-                appointmentRepository.delete(appointment.get());
-                response.put("message", "Appointment Deleted Successfully");
-                return ResponseEntity.status(HttpStatus.OK).body(response);
-            } catch (Exception e) {
-                System.out.println("Error: " + e);
-                response.put("message", "Internal Server Error");
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }
+        String extractedEmail = tokenService.extractEmail(token);
+        Patient patient = patientRepository.findByEmail(extractedEmail);
+
+        if (!patient.getId().equals(appointmentOptional.get().getPatient().getId())) {
+            response.put("message", "Patient ID mismatch.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
-        response.put("message", "No appointment for given id: " + id);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+
+        try {
+            appointmentRepository.delete(appointmentOptional.get());
+            response.put("message", "Appointment cancelled successfully.");
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (Exception e) {
+            System.err.println("Error cancelling appointment: " + e.getMessage());
+            response.put("message", "Internal server error during cancellation.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @Transactional
-    public Map<String, Object> getAppointment(String pname, LocalDate date, String token) {
+    public Map<String, Object> getAppointment(
+            String patientName,
+            LocalDate date,
+            String token
+    ) {
         Map<String, Object> map = new HashMap<>();
         String extractedEmail = tokenService.extractEmail(token);
         Long doctorId = doctorRepository.findByEmail(extractedEmail).getId();
@@ -122,41 +149,48 @@ public class AppointmentService {
 
         List<Appointment> appointments;
 
-        if (pname.equals("null")) {
-            // If pname is null or empty, fetch all appointments for that date
-
-            appointments = appointmentRepository
-                    .findByDoctorIdAndAppointmentTimeBetween(doctorId, startOfDay, endOfDay);
+        if (patientName.equals("null")) {
+            appointments =
+                    appointmentRepository.findByDoctorIdAndAppointmentTimeBetween(
+                            doctorId,
+                            startOfDay,
+                            endOfDay
+                    );
         } else {
-            // Filter by patient name
-            appointments = appointmentRepository
-                    .findByDoctorIdAndPatient_NameContainingIgnoreCaseAndAppointmentTimeBetween(
-                            doctorId, pname, startOfDay, endOfDay);
+            appointments =
+                    appointmentRepository.findByDoctorIdAndPatient_NameContainingIgnoreCaseAndAppointmentTimeBetween(
+                            doctorId,
+                            patientName,
+                            startOfDay,
+                            endOfDay
+                    );
         }
 
-        List<AppointmentDTO> appointmentDTOs = appointments.stream()
-                .map(app -> new AppointmentDTO(
-                        app.getId(),
-                        app.getDoctor().getId(), // Simplified doctor info
-                        app.getDoctor().getName(),
-                        app.getPatient().getId(),
-                        app.getPatient().getName(),
-                        app.getPatient().getEmail(),
-                        app.getPatient().getPhone(),
-                        app.getPatient().getAddress(),
-                        app.getAppointmentTime(),
-                        app.getStatus()))
+        List<AppointmentDTO> appointmentDTOs = appointments
+                .stream()
+                .map(
+                        app ->
+                                new AppointmentDTO(
+                                        app.getId(),
+                                        app.getDoctor().getId(),
+                                        app.getDoctor().getName(),
+                                        app.getPatient().getId(),
+                                        app.getPatient().getName(),
+                                        app.getPatient().getEmail(),
+                                        app.getPatient().getPhone(),
+                                        app.getPatient().getAddress(),
+                                        app.getAppointmentTime(),
+                                        app.getStatus()
+                                )
+                )
                 .collect(Collectors.toList());
 
         map.put("appointments", appointmentDTOs);
         return map;
-
     }
 
     @Transactional
-    public void changeStatus(long appointmentId)
-    {
+    public void changeStatus(long appointmentId) {
         appointmentRepository.updateStatus(1, appointmentId);
     }
-
 }

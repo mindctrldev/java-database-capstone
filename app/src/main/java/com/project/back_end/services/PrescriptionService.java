@@ -13,7 +13,6 @@ import com.project.back_end.repo.PrescriptionRepository;
 
 @Service
 public class PrescriptionService {
-    
     private final PrescriptionRepository prescriptionRepository;
 
     public PrescriptionService(PrescriptionRepository prescriptionRepository)
@@ -30,34 +29,31 @@ public class PrescriptionService {
             {
                 prescriptionRepository.save(prescription);
                 map.put("message","Prescription saved");
-                return ResponseEntity.status(HttpStatus.CREATED).body(map); 
+                return ResponseEntity.status(HttpStatus.CREATED).body(map);
             }
-            map.put("message","prescription already exists");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map); 
-            
+            map.put("message", "Prescription already exists.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+
         }
         catch(Exception e)
         {
-            System.out.println("Error: "+e);
             map.put("message","Internal Server Error");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map); 
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
         }
-    } 
+    }
 
     public ResponseEntity<Map<String, Object>> getPrescription(Long appointmentId)
     {
         Map<String, Object> map=new HashMap<>();
-
         try{
-            
             map.put("prescription",prescriptionRepository.findByAppointmentId(appointmentId));
-            return ResponseEntity.status(HttpStatus.OK).body(map); 
+            return ResponseEntity.status(HttpStatus.OK).body(map);
         }
         catch(Exception e)
         {
             System.out.println("Error: "+e);
             map.put("error","Internal Server Error");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map); 
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
         }
     }
 }
