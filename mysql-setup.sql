@@ -1,9 +1,47 @@
-connect to mysql: mysql -u root -p
-DROP DATABASE IF EXISTS cms;
-CREATE DATABASE cms;
-use cms;
-- run firs spring-boot app -
-MySQL CLI/WorkBench:
+-- Create doctor table
+CREATE TABLE doctor (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    specialty VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL
+);
+
+-- Create doctor_available_times table
+CREATE TABLE doctor_available_times (
+    doctor_id INT NOT NULL,
+    available_times VARCHAR(20) NOT NULL,
+    FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON DELETE CASCADE
+);
+
+-- Create patient table
+CREATE TABLE patient (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL
+);
+
+-- Create appointment table
+CREATE TABLE appointment (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    doctor_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    appointment_time DATETIME(6) NOT NULL,
+    status INT,
+    FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON DELETE CASCADE,
+    FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE CASCADE
+);
+
+-- Create admin table
+CREATE TABLE admin (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL PRIMARY KEY,
+    password VARCHAR(255) NOT NULL
+);
 
 INSERT INTO doctor (email, name, password, phone, specialty) VALUES
 ('dr.adams@example.com', 'Dr. Emily Adams', 'pass12345', '555-101-2020', 'Cardiologist'),

@@ -33,6 +33,7 @@
 
 ### Table: admin
 
+- id: BIGINT(50), Primary Key, Auto Increment
 - username: VARCHAR(50), Not Null
 - password: VARCHAR(255), Not Null
 
